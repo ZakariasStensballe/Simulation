@@ -47,7 +47,7 @@ class Ligevægt {
                 yAxes: [{
                     ticks: {
                     min: 0, 
-                    max: 300,
+                    max: 400,
                     callback: function(value) {
                         return value + " molekyler";
                     } //Y-aksen går fra 0-300 med enheden molekyler.
@@ -136,33 +136,33 @@ class Ligevægt {
     }
 
     reaktionHøjre() {
-        let sandsynlighed = 1 - (1 / (1 + Math.exp((10 * this.t - 1)))); //Rekationen får en sandsynlighed mellem 0 og 1.
+        let sandsynlighed = 1 - (1 / (1 + Math.exp((5 * (this.t - 1))))); //Reaktionen får en sandsynlighed mellem 0 og 1 afhængigt af t.
     
-        for (let i = this.jernioner.length - 1; i >= 0; i--) {
+        for (let i = this.jernioner.length - 1; i >= 0; i--) { //Der løbes baglæns igennem jernionerner[] med indekset i.
             let j = this.jernioner[i];
-            for (let k = this.thiocyanationer.length - 1; k >= 0; k--) {
+            for (let k = this.thiocyanationer.length - 1; k >= 0; k--) { //Der løbes baglæng gennem tjiocyanationer[] med indekset k.
                 let tc = this.thiocyanationer[k];
     
-                let dx = tc.position.x - j.position.x;
-                let dy = tc.position.y - j.position.y;
-                let afstand = Math.sqrt(dx * dx + dy * dy);
+                let ax = tc.position.x - j.position.x; //Forskellen i x-aksen beregnes.
+                let ay = tc.position.y - j.position.y; //Forskellen i y-aksen beregnes.
+                let afstand = Math.sqrt(ax * ax + ay * ay); //Afstanden mellem de to molekyler beregnes med Pythagoras.
     
-                if (afstand < 10 && frameCount - j.levetid > 30 && frameCount - tc.levetid > 30) {
+                if (afstand < 10 && frameCount - j.levetid > 30 && frameCount - tc.levetid > 30) { //Hvis modellerne er tæt nok på hinanden og "gamle nok" kan de kollidere.
     
-                    if (random(0, 1) < sandsynlighed) {
+                    if (random(0, 1) < sandsynlighed) { //Hvis sandsynlighed er større end et random tal mellem 0 og 1.
                         let nyX = j.position.x;
-                        let nyY = j.position.y - 100;
+                        let nyY = j.position.y - 100; //x- og y-positionen gemmes.
     
-                        this.jernioner.splice(i, 1);
-                        this.thiocyanationer.splice(k, 1);
+                        this.jernioner.splice(i, 1); //Jernionen fjernes.
+                        this.thiocyanationer.splice(k, 1); //Thiocyanationen fjernes.
     
-                        this.jernthiocyanationer.push(new Jernthiocyanation(nyX, nyY, this.t));
-                    } else {
-                        j.hastighed.mult(-1);
-                        tc.hastighed.mult(-1);
+                        this.jernthiocyanationer.push(new Jernthiocyanation(nyX, nyY, this.t)); //Der tilføjes en ny jernthiocyanation i den nye position.
+                    } else { 
+                        j.hastighed.mult(-1); //Jernionen vendes.
+                        tc.hastighed.mult(-1); //Thiocyanationen vendes.
 
-                        j.levetid = frameCount;
-                        tc.levetid = frameCount;
+                        j.levetid = frameCount; //Levetiden for jernionen sættes til det nuværende frameCount.
+                        tc.levetid = frameCount; //Levetiden for thuocyanationen sættes til det nuværende frameCount.
                     }
     
                     break;
@@ -172,25 +172,27 @@ class Ligevægt {
     }
 
     sammensætningVenstre() {
-        if (this.jernthiocyanationer.length >= this.t * 100)
+        if (this.jernthiocyanationer.length >= this.t * 100) //Metoden kører kun, når der er for få jernthiocyanationer.
             for (let i = this.jernthiocyanationer.length - 1; i >= 0; i--) {
                 let jtc1 = this.jernthiocyanationer[i];
 
                 for (let k = i - 1; k >= 0; k--) {  
                     let jtc2 = this.jernthiocyanationer[k];
 
-                    let dx = jtc2.position.x - jtc1.position.x;
-                    let dy = jtc2.position.y - jtc1.position.y;
-                    let afstand = Math.sqrt(dx * dx + dy * dy);
+                    //Der itereres baglæns igennem jernthiocyanationer for at undgå fejl. Den ene får er på pladsen bag den anden.
 
-                    if (afstand < 10 && frameCount - jtc.levetid > 30) {
-                        let nyX = tc.position.x;
-                        let nyY = tc.position.y - 100;
+                    let dx = jtc2.position.x - jtc1.position.x; //Forskellen i x-aksen defineres.
+                    let dy = jtc2.position.y - jtc1.position.y; //Forskellen i y-aksen defineres.
+                    let afstand = Math.sqrt(dx * dx + dy * dy); //Der anvendes pythagoras for at beregne afstanden mellem de to ioner.
 
-                        this.jernthiocyanationer.splice(k, 1);
+                    if (afstand < 10 && frameCount - jtc.levetid > 30) {  //Molekylerne kolliderer, hvis afstanden er lille nok, og de er "gamle nok".
+                        let nyX = tc.position.x; //x-positionen gemmes
+                        let nyY = tc.position.y - 100; //y-positionen gemmes.
 
-                        this.jernioner.push(new Jernion(nyX, nyY, this.t));
-                        this.thiocyanationer.push(new Thiocyanation(nyX, nyY, this.t));
+                        this.jernthiocyanationer.splice(k, 1); //Den ene af jernthiocayantionerne fjernes.
+
+                        this.jernioner.push(new Jernion(nyX, nyY, this.t)); //Der dannes en ny jernion i den gemte position.
+                        this.thiocyanationer.push(new Thiocyanation(nyX, nyY, this.t)); //Der dannes en ny thiocyanation i den gemte position.
 
                         break;  
                     }
@@ -199,33 +201,32 @@ class Ligevægt {
     }
 
     reaktionVenstre() { 
-        let sandsynlighed = 1 / (1 + Math.exp(10 * (this.t - 1))); 
+        let sandsynlighed = 1 / (1 + Math.exp(5 * (this.t - 1))); //Reaktionen får en sandsynlighed mellem 0 og 1 afhængigt af t.
     
-        for (let i = this.jernthiocyanationer.length - 1; i >= 0; i--) {
+        for (let i = this.jernthiocyanationer.length - 1; i >= 0; i--) { //Der løbes baglæns igennem jernithiocyanatonerner[] med indekset i.
             let jtc = this.jernthiocyanationer[i];
+            for (let k = i - 1; k >= 0; k--) { 
+                let jtc1 = this.jernthiocyanationer[k]; //Der løbes baglæng gennem tjiocyanationer[] med indekset k, som er i-1.
     
-            for (let k = i - 1; k >= 0; k--) {
-                let jtc1 = this.jernthiocyanationer[k];
+                let ax = jtc1.position.x - jtc.position.x; //Forskellen i x-aksen beregnes.
+                let ay = jtc1.position.y - jtc.position.y; //Forskellen i y-aksen beregnes.
+                let afstand = Math.sqrt(ax * ax + ay * ay); //Afstanden mellem de to molekyler beregnes med Pythagoras.
     
-                let dx = jtc1.position.x - jtc.position.x;
-                let dy = jtc1.position.y - jtc.position.y;
-                let afstand = Math.sqrt(dx * dx + dy * dy);
+                if (afstand < 10 && frameCount - jtc.levetid > 30 && frameCount - jtc1.levetid > 30) {  //Hvis modellerne er tæt nok på hinanden og "gamle nok" kan de kollidere.
+                    if (random(0, 1) < sandsynlighed) { //Hvis sandsynlighed er større end et random tal mellem 0 og 1.
+                        let nyX = jtc.position.x; 
+                        let nyY = jtc.position.y - 100; //x- og y-positionen gemmes.
     
-                if (afstand < 10 && frameCount - jtc.levetid > 30 && frameCount - jtc1.levetid > 30) {
-                    if (random(0, 1) < sandsynlighed) {
-                        let nyX = jtc.position.x;
-                        let nyY = jtc.position.y - 100;
+                        this.jernthiocyanationer.splice(k, 1); //En af jernthiocyanaterne fjernes.
     
-                        this.jernthiocyanationer.splice(k, 1);
-    
-                        this.jernioner.push(new Jernion(nyX, nyY, this.t));
-                        this.thiocyanationer.push(new Thiocyanation(nyX, nyY, this.t));
+                        this.jernioner.push(new Jernion(nyX, nyY, this.t)); //Der tilføjes en jernion i den gemte position.
+                        this.thiocyanationer.push(new Thiocyanation(nyX, nyY, this.t)); //Der tilføjes en thiocyanation i den gemte position,
                     } else {
-                        jtc.hastighed.mult(-1);
-                        jtc1.hastighed.mult(-1);
+                        jtc.hastighed.mult(-1); //Den ene jernthiocyanation vendes.
+                        jtc1.hastighed.mult(-1); //Den anden jernthiocyanation vendes.
 
-                        jtc.levetid = frameCount;
-                        jtc1.levetid = frameCount;
+                        jtc.levetid = frameCount; //Den ene jernthiocyanations levetid sættes til den nuværende frameCount.
+                        jtc1.levetid = frameCount; //Den anden jernthiocyanations levetid sættes til den nuværende frameCount.
                     }
     
                     break;
@@ -235,42 +236,50 @@ class Ligevægt {
     }
 
     internKollision() {
-        for (let i = this.jernioner.length - 1; i >= 0; i--) {
+        for (let i = this.jernioner.length - 1; i >= 0; i--) { //Der itereres igennem jernioner med indekset i.
             let j = this.jernioner[i];
-            for (let k = this.jernthiocyanationer.length - 1; k >= 0; k--) {
-                let jtc = this.jernthiocyanationer[k];
+            for (let k = this.jernthiocyanationer.length - 1; k >= 0; k--) { //Der iteres igennem jernthiocyanationer med indekset k.
+                let jtc = this.jernthiocyanationer[k]; 
 
-                let dx = jtc.position.x - j.position.x;
+                let dx = jtc.position.x - j.position.x; 
                 let dy = jtc.position.y - j.position.y;
-                let afstand = Math.sqrt(dx * dx + dy * dy);
+                let afstand = Math.sqrt(dx * dx + dy * dy); //Afstanden mellem de 2 ioner beregnes.
 
-                if (afstand < 10 && frameCount - jtc.levetid > 30 && frameCount - j.levetid > 30) {
+                if (afstand < 10 && frameCount - jtc.levetid > 30 && frameCount - j.levetid > 30) { //Hvis afstandene er lille nok, og ionerne er gamle nok, kan de støde samme.
                     j.hastighed = j.hastighed.mult(-1);
                     jtc.hastighed = jtc.hastighed.mult(-1);
 
+                    //Hastighederne vendes.
+
                     j.levetid = frameCount;
                     jtc.levetid = frameCount;
+
+                    //Levetiden sættes til det nuværende frameCount.
 
                     break;
                 }
             }
         }
         
-        for (let i = this.thiocyanationer.length - 1; i >= 0; i--) {
+        for (let i = this.thiocyanationer.length - 1; i >= 0; i--) {  //Der itereres igennem thiocyanationer med indekset i.
             let tc = this.thiocyanationer[i];
-            for (let k = this.jernthiocyanationer.length - 1; k >= 0; k--) {
+            for (let k = this.jernthiocyanationer.length - 1; k >= 0; k--) { //Der iteres igennem jernthiocyanationer med indekset k.
                 let jtc = this.jernthiocyanationer[k];
 
                 let dx = jtc.position.x - tc.position.x;
                 let dy = jtc.position.y - tc.position.y;
-                let afstand = Math.sqrt(dx * dx + dy * dy);
+                let afstand = Math.sqrt(dx * dx + dy * dy); //Afstanden mellem de 2 ioner beregnes.
 
-                if (afstand < 10 && frameCount - jtc.levetid > 30 && frameCount - tc.levetid > 30) {
+                if (afstand < 10 && frameCount - jtc.levetid > 30 && frameCount - tc.levetid > 30) { //Hvis afstandene er lille nok, og ionerne er gamle nok, kan de støde samme.
                     tc.hastighed = tc.hastighed.mult(-1);
                     jtc.hastighed = jtc.hastighed.mult(-1);
 
+                    //Hastighederne vendes.
+
                     tc.levetid = frameCount;
                     jtc.levetid = frameCount;
+
+                    //Levetiden sættes til det nuværende frameCount.
 
                     break;
                 }
@@ -279,29 +288,36 @@ class Ligevægt {
     }
 
     tegnDiagram() {
-        this.xValues.push(this.xValues[9] + 1);
-        this.længdeJernioner.push(this.jernioner.length);
+        this.xValues.push(this.xValues[9] + 1); //Der tilføjes nye værdier på x-aksen.
+        this.længdeJernioner.push(this.jernioner.length); 
         this.længdeThiocyanationer.push(this.thiocyanationer.length);
         this.længdeJernthiocyanationer.push(this.jernthiocyanationer.length);
 
-        this.xValues.shift();
+        //Den nuværende længde af det givne array pushes på.
+
+        this.xValues.shift(); 
         this.længdeJernioner.shift();
         this.længdeThiocyanationer.shift();
         this.længdeJernthiocyanationer.shift();
+
+        //Indeks [0] fjernes i de forskellige arrays.
     
-        this.chart.data.labels = this.xValues;
-        this.chart.data.datasets[0].data = this.længdeJernioner;
+        this.chart.data.labels = this.xValues; //Labels på x.aksen er xValues.
+        this.chart.data.datasets[0].data = this.længdeJernioner; 
         this.chart.data.datasets[1].data = this.længdeThiocyanationer;
         this.chart.data.datasets[2].data = this.længdeJernthiocyanationer;
-        this.chart.update();
+
+        //De forskellige datasæt på y-aksen defineres.
+
+        this.chart.update(); //Chartet opdateres.
     }
 
     jernKnap() {
-        let plusknap = createButton("+10");
-        plusknap.position(250,220);
+        let plusknap = createButton("+10"); //Der laves en htmlknap.
+        plusknap.position(250,220); 
         plusknap.style("color", "green");
         plusknap.style("font-size", "20px")
-        plusknap.mousePressed(() => this.tilføjJernioner());
+        plusknap.mousePressed(() => this.tilføjJernioner()); //Hvis den trykkes tilføjes der ioner med metoden tilføjJernioner().
         
 
         let minusknap = createButton("-10");
@@ -343,9 +359,9 @@ class Ligevægt {
 
 
     tilføjJernioner() {
-        if (this.længdeAlleioner <= 400) {
-            for (let i = 0; i < 10; i++) {
-                this.jernioner.push(new Jernion(random(posX, posX + 400), random(posY, posY + 500), this.t));
+        if (this.længdeAlleioner <= 400) { //Hvis der ikke er flere end 400 ioner i alt.
+            for (let i = 0; i < 10; i++) { 
+                this.jernioner.push(new Jernion(random(posX, posX + 400), random(posY, posY + 500), this.t)); //Der tilføjes 10 nye jernioner.
             }
         }
     }
